@@ -1,0 +1,57 @@
+; Original from Apollointhehouse modified for my use case
+
+SETUP_STACK:
+; Create real MAX_INDEX (STACK_DATA + 2500)
+	LOAD STACK_I_LOAD
+	ADD N_2500
+	STORE MAX_INDEX
+
+
+; ___PUSH_SUB___
+;             Indirect store value into index
+SUB_PUSH:     LOAD  I_STORE
+              ADD   INDEX
+              STORE I_STORE_PUSH
+
+              LOAD LHS
+I_STORE_PUSH: STORE 0
+
+;             Increment index
+              LOAD  INDEX
+              INC   INDEX
+
+;             Store Indirect jmp to R_ADR at I_JMP_PUSH
+              LOAD  I_JMP
+              ADD   R_ADR
+              STORE I_JMP_PUSH
+I_JMP_PUSH:   JMP   0
+
+
+; ___POP_SUB___
+;            Decrement index
+SUB_POP:     LOAD  INDEX
+             DEC   INDEX
+
+;            Indirect load value into POP
+             LOAD  I_LOAD
+             ADD   INDEX
+             STORE I_LOAD_POP
+I_LOAD_POP:  LOAD  0
+
+             STORE R_VALUE
+
+;            Indirect clear value
+             LOAD  I_CLEAR
+             ADD   INDEX
+             STORE I_CLEAR_POP
+I_CLEAR_POP: CLEAR 0
+
+;            Store Indirect jmp to R_ADR at I_JMP_POP
+             LOAD  I_JMP
+             ADD   R_ADR
+             STORE I_JMP_POP
+I_JMP_POP:   JMP   0
+
+STACK_I_LOAD: LOAD STACK_DATA
+MAX_INDEX: .DATA 0
+INDEX:     0 STACK_DATA

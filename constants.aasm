@@ -1,0 +1,14 @@
+ZERO: .DATA 0
+ONE: .DATA 1
+TWO: .DATA 2
+THREE: .DATA 3
+FOUR: .DATA 4
+N_256: .DATA 100 ; Used to adjust RAND in maze.aasm
+N_2500: .DATA 9C4 ; Used as the stack size for cell_helpers.aasm
+
+SENTINEL: .DATA FFFF
+
+I_LOAD:  LOAD  0
+I_STORE: STORE 0
+I_JMP:   JMP   0
+I_CLEAR: CLEAR 0

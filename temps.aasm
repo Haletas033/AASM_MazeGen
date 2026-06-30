@@ -1,0 +1,10 @@
+; '_' at the start of a label represents a temporary value that could be clobbered between calls and thus shouldn't be used to store data that outlasts the function's lifetime
+
+_TEMP: .DATA 0
+
+_TEMP_LHS: .DATA 0
+_TEMP_RHS: .DATA 0
+
+_TEMP_ADR_0: LOAD 0
+_TEMP_ADR_1: LOAD 0
+

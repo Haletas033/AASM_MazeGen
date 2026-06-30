@@ -1,0 +1,223 @@
+; --------CELL_DATA_LAYOUT--------- ;
+;                                   ;
+; 0b(visited)(top_wall)(right_wall) ;
+;                                   ;
+; --------CELL_DATA_LAYOUT--------- ;
+
+; Cell data is read and written to in reverse (right_wall to visited)
+
+; --------------------------------------CELL LAYOUT-------------------------------------- ;
+;                                                                                         ;
+; 0b000(offset=0)_000(offset=1)_000(offset=2)_000(offset=3)_000(offset=4)_0(extra unused) ;
+;                                                                                         ;
+; --------------------------------------CELL LAYOUT---------------------------------------;
+
+; Helper to put the cell chunk in CELL and setup R_VALUE with the quotient and R_VALUE_OTHER with the remainder
+; Puts the offset in OFFSET
+; R_ADR, LHS, and RHS are also stored in temp during this stage
+; uses _TEMP_ADR_1 to return to call site
+GET_CELL:
+; Store real R_ADR in TEMP to retrieve later
+	LOAD R_ADR
+	STORE _TEMP_ADR_0
+
+; Store real LHS and RHS in TEMP
+	LOAD LHS
+	STORE _TEMP_LHS
+	LOAD RHS
+	STORE _TEMP_RHS
+
+; Get the chunk and offset of the index where the quotient is the chunk and the remainder is the offset
+	LOAD BUILD_STRUCT
+	STORE R_ADR
+
+	LOAD PACKED_COUNT
+	STORE RHS
+	JMP DIV
+
+	BUILD_STRUCT: 0 BUILD_STRUCT
+	; Load the chunk containing the index
+	LOAD CELL_I_LOAD
+	ADD ONE ; Skip header
+	ADD R_VALUE
+	STORE CELL_LOAD_TARGET
+
+	CELL_LOAD_TARGET: LOAD 0
+		STORE CELL
+		LOAD CELL
+		STORE LHS
+		LOAD OFFSETS_I_LOAD
+		ADD R_VALUE_OTHER
+		STORE OFFSET_LOAD_TARGET
+
+	OFFSET_LOAD_TARGET: LOAD 0
+		STORE OFFSET
+	; Return to call site
+		LOAD I_JMP
+		ADD _TEMP_ADR_1
+		STORE GET_CELL_RET
+	GET_CELL_RET: JMP 0
+
+; Restores LHS, RHS, and R_ADR from TEMP and returns
+CELL_HELPER_CLEANUP:
+	LOAD _TEMP_LHS
+	STORE LHS
+	LOAD _TEMP_RHS
+	STORE RHS
+	LOAD _TEMP_ADR_0
+	STORE R_ADR
+	LOAD I_JMP
+	ADD R_ADR
+	STORE CELL_HELPER_RET
+	CELL_HELPER_RET: JMP 0
+
+
+; Retrieves the cell at index LHS stores in R_VISITED, R_TOP_WALL, R_RIGHT_WALL
+GET_CELL_INDEX:
+; Call GET_CELL to setup
+	LOAD GET_CELL_INDEX_MAIN
+	STORE _TEMP_ADR_1
+	JMP GET_CELL
+
+	GET_CELL_INDEX_MAIN: 0 GET_CELL_INDEX_MAIN
+		LOAD OFFSET
+		STORE RHS
+		LOAD GET_FIELDS
+		STORE R_ADR
+		JMP DIV
+	
+	GET_FIELDS: 0 GET_FIELDS
+		LOAD R_VALUE
+		STORE LHS
+		LOAD TWO
+		STORE RHS
+		LOAD GET_RIGHT
+		STORE R_ADR
+		JMP DIV
+
+	GET_RIGHT: 0 GET_RIGHT
+		LOAD R_VALUE_OTHER
+		STORE R_RIGHT_WALL
+
+		LOAD R_VALUE
+		STORE LHS
+		LOAD TWO
+		STORE RHS
+		LOAD GET_TOP
+		STORE R_ADR
+		JMP DIV
+
+	GET_TOP: 0 GET_TOP
+		LOAD R_VALUE_OTHER
+		STORE R_TOP_WALL
+
+		LOAD R_VALUE
+		STORE LHS
+		LOAD TWO
+		STORE RHS
+		LOAD GET_VISITED
+		STORE R_ADR
+		JMP DIV
+
+	GET_VISITED: 0 GET_VISITED
+		LOAD R_VALUE_OTHER
+		STORE R_VISITED
+	
+	GET_CELL_INDEX_END:
+	; Restore and return
+		JMP CELL_HELPER_CLEANUP
+
+
+; Makes visited true for the cell at index
+SET_CELL_INDEX_VISITED:
+; Call GET_CELL to setup
+	LOAD SET_CELL_INDEX_VISITED_MAIN
+	STORE _TEMP_ADR_1
+	JMP GET_CELL
+
+	SET_CELL_INDEX_VISITED_MAIN: 0 SET_CELL_INDEX_VISITED_MAIN
+		LOAD CELL
+		ADD OFFSET
+		ADD OFFSET
+		ADD OFFSET
+		ADD OFFSET
+		STORE CELL
+		LOAD CELL_I_STORE
+		ADD ONE ; Skip header
+		ADD R_VALUE ; R_VALUE still contains the quotient from GET_CELL
+		STORE CELL_STORE_TARGET_VISITED
+		LOAD CELL ; Get CELL ready to store
+
+	CELL_STORE_TARGET_VISITED: STORE 0
+	; Restore and return
+		JMP CELL_HELPER_CLEANUP
+		
+
+; Makes top wall true for the cell at index
+SET_CELL_INDEX_TOP:
+; Call GET_CELL to setup
+	LOAD SET_CELL_INDEX_TOP_MAIN
+	STORE _TEMP_ADR_1
+	JMP GET_CELL
+
+	SET_CELL_INDEX_TOP_MAIN: 0 SET_CELL_INDEX_TOP_MAIN
+		LOAD CELL
+		ADD OFFSET
+		ADD OFFSET
+		STORE CELL
+		LOAD CELL_I_STORE
+		ADD ONE ; Skip header
+		ADD R_VALUE ; R_VALUE still contains the quotient from GET_CELL
+		STORE CELL_STORE_TARGET_TOP
+		LOAD CELL ; Get CELL ready to store
+
+	CELL_STORE_TARGET_TOP: STORE 0
+	; Restore and return
+		JMP CELL_HELPER_CLEANUP
+
+
+; Makes right wall true for the cell at index
+SET_CELL_INDEX_RIGHT:
+; Call GET_CELL to setup
+	LOAD SET_CELL_INDEX_RIGHT_MAIN
+	STORE _TEMP_ADR_1
+	JMP GET_CELL
+
+	SET_CELL_INDEX_RIGHT_MAIN: 0 SET_CELL_INDEX_RIGHT_MAIN
+		LOAD CELL
+		ADD OFFSET
+		STORE CELL
+
+		LOAD CELL_I_STORE
+		ADD ONE ; Skip header
+		ADD R_VALUE ; R_VALUE still contains the quotient from GET_CELL
+		STORE CELL_STORE_TARGET_RIGHT
+		LOAD CELL ; Get CELL ready to store
+
+	CELL_STORE_TARGET_RIGHT: STORE 0
+	; Restore and return
+		JMP CELL_HELPER_CLEANUP
+
+
+; Cell return struct (all booleans)
+R_VISITED: .DATA 0
+R_TOP_WALL: .DATA 0
+R_RIGHT_WALL: .DATA 0
+
+OFFSETS_I_LOAD: LOAD OFFSETS
+
+; Precomputed offsets to save time
+OFFSETS: .DATA 2000
+	.DATA 400
+	.DATA 80
+	.DATA 10
+	.DATA 2
+
+; Holds current offset from GET_CELL
+OFFSET: .DATA 0
+
+PACKED_COUNT: .DATA 5 ; Max number of CELL structs that fit in 16 bits
+
+CELL: .DATA 0
+CELL_I_LOAD: LOAD CELL_DATA
+CELL_I_STORE: STORE CELL_DATA

@@ -1,0 +1,148 @@
+MUL:
+	CLEAR _TEMP
+	CLEAR R_VALUE
+
+MUL_LOOP:
+	LOAD _TEMP
+	COMP LHS
+	JMPEQ MUL_END
+	ADD ONE
+	STORE _TEMP
+	LOAD R_VALUE
+	ADD RHS
+	STORE R_VALUE
+	JMP MUL_LOOP
+
+MUL_END:
+; Jump back to call site
+	LOAD I_JMP
+	ADD R_ADR
+	STORE JMP_MUL_RET
+
+JMP_MUL_RET: JMP 0
+
+
+
+DIV:
+	CLEAR _TEMP
+	CLEAR R_VALUE
+	CLEAR R_VALUE_OTHER
+	LOAD _TEMP
+	ADD LHS
+	STORE _TEMP
+
+DIV_LOOP:
+	LOAD RHS
+	COMP _TEMP
+	JMPLT DIV_END
+
+	LOAD _TEMP
+	SUB RHS
+	STORE _TEMP
+
+	LOAD R_VALUE
+	ADD ONE
+	STORE R_VALUE
+
+	JMP DIV_LOOP
+
+DIV_END:
+; Store remainder
+	LOAD _TEMP
+	STORE R_VALUE_OTHER
+
+; Jump back to call site
+	LOAD I_JMP
+	ADD R_ADR
+	STORE JMP_DIV_RET
+
+JMP_DIV_RET: JMP 0
+
+
+; Wrapper around DIV
+MOD:
+; Store real R_ADR in TEMP to retrieve later
+	LOAD R_ADR
+	STORE _TEMP_ADR_0
+
+; Load custom return and call DIV
+	LOAD MOD_END
+	STORE R_ADR
+	JMP DIV
+
+MOD_END: 0 MOD_END
+; Bring R_VALUE_OTHER into R_VALUE
+	LOAD R_VALUE_OTHER
+	STORE R_VALUE
+
+; Bring back original R_ADR and jump to call site
+	LOAD _TEMP_ADR_0
+	STORE R_ADR
+	LOAD I_JMP
+	ADD R_ADR
+	STORE JMP_MOD_RET
+JMP_MOD_RET: JMP 0
+	
+
+RAND:
+; Store real R_ADR in TEMP to retrieve later
+	LOAD R_ADR
+	STORE _TEMP_ADR_1
+
+; Store real LHS and RHS in TEMP to retrieve later
+	LOAD LHS
+	STORE _TEMP_LHS
+	LOAD RHS
+	STORE _TEMP_RHS
+
+; Load RAND's values into LHS and RHS
+	LOAD A
+	STORE LHS
+	LOAD SEED
+	STORE RHS
+
+; Load custom return and call MUL
+	LOAD RAND_MOD
+	STORE R_ADR
+	JMP MUL
+
+RAND_MOD: 0 RAND_MOD
+; Load RAND's values into LHS and RHS
+	LOAD R_VALUE
+	ADD C
+	STORE LHS
+	LOAD M
+	STORE RHS
+
+; Load custom return and call MOD
+	LOAD RAND_END
+	STORE R_ADR
+	JMP MOD
+
+RAND_END: 0 RAND_END
+; Store new seed
+	LOAD R_VALUE
+	STORE SEED
+
+; Bring back TEMPs
+	LOAD _TEMP_LHS
+	STORE LHS
+	LOAD _TEMP_RHS
+	STORE RHS
+	LOAD _TEMP_ADR_1
+	STORE R_ADR
+
+; Jump to call site
+	LOAD I_JMP
+	ADD R_ADR
+	STORE JMP_RAND_RET
+JMP_RAND_RET: JMP 0
+
+; A, C, and M for RAND
+A: .DATA 6329
+C: .DATA 3619
+M: .DATA FFFF
+
+SEED: .DATA 10
+
+I_JMP:  JMP 0
