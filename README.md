@@ -25,3 +25,5 @@ How to Run and How to Build assume maze/ working directory adjust accordingly
   3. Copy maze_draw into maze/ or whatever your main directory is called and delete build if you want
   4. Assemble the maze.aaexe (called from outside the working dir): ```java -jar AAsm.jar ASSEMBLE ~/maze/maze maze.aasm cell_helpers.aasm stack.aasm helpers.aasm shared.aasm temps.aasm constants.aasm maze_gen_mem.aasm```
   5. Run the program (called from outside the working dir): ```java -jar AAsm.jar EXECUTE ~/maze/maze.aaexe | ./maze/maze_draw```
+
+[**LICENSE**](LICENSE)
