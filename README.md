@@ -1,7 +1,7 @@
 # MazeGen
 MazeGen is a simple maze generator written in AASM which is a simple 16 bit version of ASAM with only a few instructions (learn more [here](https://github.com/Apollointhehouse/AAsm)).
 
-![Maze Example (Seed: 0, Size: 50)](assets/maze.svg)
+<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/8beb90d7-a794-4e01-985c-71e14d50b4ec" />
 
 ## Features:
 * Generate any maze between 1x1 and 50x50
